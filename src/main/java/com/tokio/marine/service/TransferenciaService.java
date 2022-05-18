@@ -22,6 +22,9 @@ public class TransferenciaService extends BaseService {
 	TransferenciaRepository transferenciaRepository;
 	
 	LogRepository logRepository;
+	/*
+	 * @Autowired Gson gson;
+	 */
 
 	private static final ModelMapper modelMapper = new ModelMapper();
 
@@ -56,6 +59,79 @@ public class TransferenciaService extends BaseService {
 	public Transferencia salvar(Transferencia transferencia) {
 		return transferenciaRepository.save(transferencia);
 	}
+
+	/*
+	 * @SuppressWarnings({ "rawtypes", "unchecked" }) public
+	 * ResponseEntity<TransferenciaResponse> salvar(TransferenciaResponse
+	 * transferenciaResponse) { transferenciaReposi
+	 * 
+	 * Transferencia transferencia = modelMapper.map(transferenciaResponse,
+	 * Transferencia.class); ResponseEntity responseEntity = new
+	 * ResponseEntity(HttpStatus.CREATED); try {
+	 * transferencia.setDataInicioVigencia(transferenciaResponse.
+	 * getDataInicioVigencia().atTime(0, 0, 0));a
+	 * transferenciaRepository.save(transferencia); if
+	 * (transferenciaResponse.getDataTerminoVigencia() != null) {
+	 * transferencia.setDataTerminoVigencia(transferenciaResponse.
+	 * getDataTerminoVigencia().atTime(23, 59, 59)); }
+	 * transferencia.setDataAtualizacao(LocalDate.now());
+	 * transferenciaRepository.save(transferencia); } catch (Exception e) {
+	 * responseEntity =
+	 * ResponseEntity.status(HttpStatus.CREATED).body("Data Inválida"); } return
+	 * responseEntity;
+	 * 
+	 * }
+	 */
+
+	/*
+	 * public void alterar(TransferenciaResponse transferenciaResponse) { Log log =
+	 * new Log(); Transferencia transferencia =
+	 * transferenciaRepository.findAll(transferenciaResponse.getId());
+	 * log.setTipoOperacao("UPDATE"); log.setDataAlteracao(new Date());
+	 * log.setJson(gson.toJson(transferencia));
+	 * log.setCollection(transferencia.getClass().getSimpleName());
+	 * logRepository.save(log);
+	 * 
+	 * transferencia.setDataInicioVigencia(transferenciaResponse.
+	 * getDataInicioVigencia().atTime(00, 00, 00)); if
+	 * (transferenciaResponse.getDataTerminoVigencia() != null) {
+	 * transferencia.setDataTerminoVigencia(transferenciaResponse.
+	 * getDataTerminoVigencia().atTime(00, 00, 00)); }
+	 * 
+	 * transferencia.setDataAtualizacao(LocalDate.now()); //usuario atualização
+	 * transferenciaRepository.save(transferencia); }
+	 */
+
+	/*
+	 * private boolean validarDataParaImportacao(Transferencia transferencia) {
+	 * boolean retornoValor = false;
+	 * 
+	 * if
+	 * (transferencia.getDataInicioVigencia().isBefore(LocalDateTime.now().minusDays
+	 * (1))) { throw new DateTimeException(""); }
+	 * 
+	 * List<Transferencia> transferenciaIgual =
+	 * transferenciaRepository.listarTransferenciasIguais(transferencias); if
+	 * (transferenciasIguais != null && !transferenciasIguais.isEmpty()) {
+	 * retornoValor = true; for (Transferencia transferenciaRealizada :
+	 * transferenciasIguais) { if
+	 * (transferencia.getDataInicioVigencia().isBefore(transferenciaRealizada.
+	 * getDataInicioVigencia())) { if (transferencia.getDataTerminoVigencia() ==
+	 * null ||
+	 * transferencia.getDataTerminoVigencia().isAfter(transferenciaRealizada.
+	 * getDataInicioVigencia())) {
+	 * transferencia.setDataTerminoVigencia(transferenciaRealizada.
+	 * getDataInicioVigencia().minusDays(1)) } break; } if
+	 * (transferencia.getDataInicioVigencia().isAfter(transferenciaRealizada.
+	 * getDataInicioVigencia())) { if
+	 * (transferenciaRealizada.getDataTerminoVigencia() == null) {
+	 * transferenciaRealizada.setDataTerminoVigencia(transferencia.
+	 * getDataInicioVigencia().minusDays(1));
+	 * transferenciaRepository.save(transferenciaRealizada); } if
+	 * (transferencia.getDataTerminoVigencia().isBefore(transferenciaRealizada.
+	 * getDataTerminoVigencia())) { throw new DuplicateKeyException(""); } } } }
+	 * retornoValor; }
+	 */
 
 	public List<TransferenciaDTO> listarTodos() {
 		List<Transferencia> transferencia = transferenciaRepository.findAll();
