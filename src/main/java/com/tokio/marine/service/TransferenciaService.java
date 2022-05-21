@@ -1,10 +1,12 @@
 package com.tokio.marine.service;
 
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import org.modelmapper.ModelMapper;	
+import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 
 import com.tokio.marine.dto.TransferenciaDTO;
@@ -20,7 +22,7 @@ import lombok.AllArgsConstructor;
 public class TransferenciaService extends BaseService {
 
 	TransferenciaRepository transferenciaRepository;
-	
+
 	LogRepository logRepository;
 	/*
 	 * @Autowired Gson gson;
@@ -28,121 +30,71 @@ public class TransferenciaService extends BaseService {
 
 	private static final ModelMapper modelMapper = new ModelMapper();
 
-	public Transferencia calculoDias(Transferencia transferencia) {
-		var total = 0;
-		if (transferencia.getDataAgendamento() > transferencia.getDataTransferencia()) {
-			total = transferencia.getDataAgendamento() - transferencia.getDataTransferencia();
-		} else {
-			total = transferencia.getDataTransferencia() - transferencia.getDataTransferencia();
-		}
-		transferencia.setDias(total);
-		return transferencia;
-	}
-
 	public Transferencia calculoTaxa(Transferencia transferencia) {
-		if (transferencia.getDias() == 0) {
-			transferencia.setTaxa(((transferencia.getValor() + 3) * 1.3) - transferencia.getValor());
-		} else if (transferencia.getDias() >= 1 && transferencia.getDias() <= 10) {
-			transferencia.setTaxa((transferencia.getValor() + 12) - transferencia.getValor());
-		} else if (transferencia.getDias() > 10 && transferencia.getDias() <= 20) {
-			transferencia.setTaxa((transferencia.getValor() * 1.082) - transferencia.getValor());
-		} else if (transferencia.getDias() > 20 && transferencia.getDias() <= 30) {
-			transferencia.setTaxa((transferencia.getValor() * 1.069) - transferencia.getValor());
-		} else if (transferencia.getDias() > 30 && transferencia.getDias() <= 40) {
-			transferencia.setTaxa((transferencia.getValor() * 1.047) - transferencia.getValor());
-		} else {
-			transferencia.setTaxa((transferencia.getValor() * 1.017) - transferencia.getValor());
+		int dias = transferencia.getDataTransferencia().getDayOfYear()
+				- transferencia.getDataAgendamento().getDayOfYear();
+		if (transferencia.getTipoOperacao().contains("A")) {
+			if (transferencia.getDataAgendamento().equals(transferencia.getDataTransferencia())) {
+				transferencia.setTaxa((transferencia.getValor() * 0.03) + 3);
+			}
+		} else if (transferencia.getTipoOperacao().contains("B")) {
+			if (dias <= 10) {
+				transferencia.setTaxa(12);
+			}
+		} else if (transferencia.getTipoOperacao().contains("C")) {
+			if (dias > 10 && dias <= 20) {
+				transferencia.setTaxa(transferencia.getValor() * 0.082);
+			} else if (dias > 20 && dias <= 30) {
+				transferencia.setTaxa(transferencia.getValor() * 0.069);
+			} else if (dias > 30 && dias <= 50) {
+				transferencia.setTaxa(transferencia.getValor() * 0.047);
+			} else if (dias > 40) {
+				transferencia.setTaxa(transferencia.getValor() * 0.017);
+			}
+		} else if (transferencia.getTipoOperacao().contains("D")) {
+			if (transferencia.getValor() <= 1000) {
+				if (transferencia.getDataAgendamento().equals(transferencia.getDataTransferencia())) {
+					transferencia.setTaxa((transferencia.getValor() * 0.03) + 3);
+				}
+			} else if (transferencia.getValor() >= 1001 && transferencia.getValor() <= 2000) {
+				if (dias <= 10) {
+					transferencia.setTaxa(12);
+				}
+			} else if (transferencia.getValor() > 2000) {
+				if (dias > 10 && dias <= 20) {
+					transferencia.setTaxa(transferencia.getValor() * 0.082);
+				} else if (dias > 20 && dias <= 30) {
+					transferencia.setTaxa(transferencia.getValor() * 0.069);
+				} else if (dias > 30 && dias <= 50) {
+					transferencia.setTaxa(transferencia.getValor() * 0.047);
+				} else if (dias > 40) {
+					transferencia.setTaxa(transferencia.getValor() * 0.017);
+				}
+			}
 		}
 		return transferencia;
 	}
 
-	public Transferencia salvar(Transferencia transferencia) {
-		return transferenciaRepository.save(transferencia);
+	public Transferencia salvar(Transferencia transferencia) throws Exception {
+		calculoTaxa(transferencia);
+		if (transferencia.getTaxa() == 0) {
+			throw new Exception("Sem taxas aplicáveis.");
+		} else {
+			transferencia.setDataAtualizacao(LocalDate.now());
+			DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/uuuu");
+			transferencia.setAgendamentoFormatado(transferencia.getDataAgendamento().format(formatter));
+			transferencia.setTransferenciaFormatado(transferencia.getDataTransferencia().format(formatter));
+			return transferenciaRepository.save(transferencia);
+		}
 	}
-
-	/*
-	 * @SuppressWarnings({ "rawtypes", "unchecked" }) public
-	 * ResponseEntity<TransferenciaResponse> salvar(TransferenciaResponse
-	 * transferenciaResponse) { transferenciaReposi
-	 * 
-	 * Transferencia transferencia = modelMapper.map(transferenciaResponse,
-	 * Transferencia.class); ResponseEntity responseEntity = new
-	 * ResponseEntity(HttpStatus.CREATED); try {
-	 * transferencia.setDataInicioVigencia(transferenciaResponse.
-	 * getDataInicioVigencia().atTime(0, 0, 0));a
-	 * transferenciaRepository.save(transferencia); if
-	 * (transferenciaResponse.getDataTerminoVigencia() != null) {
-	 * transferencia.setDataTerminoVigencia(transferenciaResponse.
-	 * getDataTerminoVigencia().atTime(23, 59, 59)); }
-	 * transferencia.setDataAtualizacao(LocalDate.now());
-	 * transferenciaRepository.save(transferencia); } catch (Exception e) {
-	 * responseEntity =
-	 * ResponseEntity.status(HttpStatus.CREATED).body("Data Inválida"); } return
-	 * responseEntity;
-	 * 
-	 * }
-	 */
-
-	/*
-	 * public void alterar(TransferenciaResponse transferenciaResponse) { Log log =
-	 * new Log(); Transferencia transferencia =
-	 * transferenciaRepository.findAll(transferenciaResponse.getId());
-	 * log.setTipoOperacao("UPDATE"); log.setDataAlteracao(new Date());
-	 * log.setJson(gson.toJson(transferencia));
-	 * log.setCollection(transferencia.getClass().getSimpleName());
-	 * logRepository.save(log);
-	 * 
-	 * transferencia.setDataInicioVigencia(transferenciaResponse.
-	 * getDataInicioVigencia().atTime(00, 00, 00)); if
-	 * (transferenciaResponse.getDataTerminoVigencia() != null) {
-	 * transferencia.setDataTerminoVigencia(transferenciaResponse.
-	 * getDataTerminoVigencia().atTime(00, 00, 00)); }
-	 * 
-	 * transferencia.setDataAtualizacao(LocalDate.now()); //usuario atualização
-	 * transferenciaRepository.save(transferencia); }
-	 */
-
-	/*
-	 * private boolean validarDataParaImportacao(Transferencia transferencia) {
-	 * boolean retornoValor = false;
-	 * 
-	 * if
-	 * (transferencia.getDataInicioVigencia().isBefore(LocalDateTime.now().minusDays
-	 * (1))) { throw new DateTimeException(""); }
-	 * 
-	 * List<Transferencia> transferenciaIgual =
-	 * transferenciaRepository.listarTransferenciasIguais(transferencias); if
-	 * (transferenciasIguais != null && !transferenciasIguais.isEmpty()) {
-	 * retornoValor = true; for (Transferencia transferenciaRealizada :
-	 * transferenciasIguais) { if
-	 * (transferencia.getDataInicioVigencia().isBefore(transferenciaRealizada.
-	 * getDataInicioVigencia())) { if (transferencia.getDataTerminoVigencia() ==
-	 * null ||
-	 * transferencia.getDataTerminoVigencia().isAfter(transferenciaRealizada.
-	 * getDataInicioVigencia())) {
-	 * transferencia.setDataTerminoVigencia(transferenciaRealizada.
-	 * getDataInicioVigencia().minusDays(1)) } break; } if
-	 * (transferencia.getDataInicioVigencia().isAfter(transferenciaRealizada.
-	 * getDataInicioVigencia())) { if
-	 * (transferenciaRealizada.getDataTerminoVigencia() == null) {
-	 * transferenciaRealizada.setDataTerminoVigencia(transferencia.
-	 * getDataInicioVigencia().minusDays(1));
-	 * transferenciaRepository.save(transferenciaRealizada); } if
-	 * (transferencia.getDataTerminoVigencia().isBefore(transferenciaRealizada.
-	 * getDataTerminoVigencia())) { throw new DuplicateKeyException(""); } } } }
-	 * retornoValor; }
-	 */
 
 	public List<TransferenciaDTO> listarTodos() {
 		List<Transferencia> transferencia = transferenciaRepository.findAll();
-		var transferenciaResponse = new Transferencia();
-		this.calculoDias(transferenciaResponse);
-		this.calculoTaxa(transferenciaResponse);
 		if (transferencia.isEmpty()) {
 			throw new ResultadoNaoEncontradoException();
 		}
-		return new ArrayList<>(transferencia.stream()
-				.map(prod -> new ModelMapper().map(prod, TransferenciaDTO.class)).collect(Collectors.toList()));
+		return new ArrayList<>(transferencia.stream().map(prod -> new ModelMapper().map(prod, TransferenciaDTO.class))
+				.collect(Collectors.toList()));
 	}
 
 }

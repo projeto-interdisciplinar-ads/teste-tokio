@@ -13,6 +13,5 @@ public class BaseDocumentDTO {
 
 	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd/MM/yyyy", timezone = "America/Sao_Paulo")
 	protected LocalDate dataAtualizacao;
-
-	protected String usuarioAtualizacao;
+	
 }

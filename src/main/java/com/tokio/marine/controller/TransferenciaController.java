@@ -47,7 +47,7 @@ public class TransferenciaController {
 
 	@PostMapping("/salvar")
 	@ResponseStatus(HttpStatus.CREATED)
-	public Transferencia salvar(@RequestBody Transferencia transferencia) {
+	public Transferencia salvar(@RequestBody Transferencia transferencia) throws Exception {
 		return transferenciaService.salvar(transferencia);
 	}
 }
